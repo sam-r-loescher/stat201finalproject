@@ -23,7 +23,7 @@ charities <- read.csv("charities_final(in)(in).csv")
 
 
 
-# Prepare charity data
+
 
 data_long <- data %>%
   
@@ -33,7 +33,7 @@ data_long <- data %>%
 
 
 
-# Prepare spatial data
+
 
 world <- st_as_sf(rnaturalearth::ne_countries(scale = "medium", returnclass = "sf"))
 
@@ -41,7 +41,6 @@ map_data <- left_join(world, data_long, by = c("name" = "Country"))
 
 
 
-# Prepare GDP data
 
 gdp_data <- gdppercapnew %>%
   
@@ -49,7 +48,7 @@ gdp_data <- gdppercapnew %>%
 
 
 
-# Merge datasets
+
 
 merged_data <- inner_join(data_long, gdp_data, by = "Country") %>%
   
@@ -73,7 +72,7 @@ merged_data <- inner_join(data_long, gdp_data, by = "Country") %>%
 
 
 
-# Labels for key countries
+
 
 label_data <- merged_data %>%
   
@@ -763,7 +762,7 @@ server <- function(input, output, session) {
     
   })
   
-  # Leaflet map
+
   
   output$my_map <- renderLeaflet({
     
@@ -801,7 +800,7 @@ server <- function(input, output, session) {
   
   
   
-  # Scatter plot
+  
   
   output$gdp_plot <- renderPlot({
     
