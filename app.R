@@ -2,6 +2,7 @@ library(shiny)
 library(bslib)
 library(tidyverse)
 library(ggplot2)
+library(scales)
 library(dplyr)
 library(plotly)
 library(sf)
@@ -17,7 +18,7 @@ data <- read.csv("2010.csv")
 
 gdppercapnew <- read.csv("gdp_per_capita.csv")
 
-charities <- read.csv("charities_final(in)(in).csv")
+charities <- read.csv("charities_top10.csv")
 
 
 
@@ -880,23 +881,30 @@ server <- function(input, output, session) {
   
   # Filter the data and create the plot based on state and county selection
   
+   # Filter the data and create the plot based on state and county selection
+  
   output$revenue_plot <- renderPlotly({
     
     # Filter the dataset based on the selected state and county
     
     filtered_data <- charities %>%
-      
       filter(CENSUS_STATE_ABBR == input$state, CENSUS_COUNTY_NAME == input$county)
     
     
     
     # Create the plot
-    
-    ggplot(filtered_data, aes(x = reorder(substr(ORG_NAME_CURRENT, 1, 20), -Total_Assets),
+    filtered_data$tooltip_text <- paste(
+      "Charity:", filtered_data$ORG_NAME_CURRENT,
+      "<br>Total Assets: $", comma(filtered_data$Total_Assets * 1000)
+      )
+    plot <- ggplot(filtered_data, aes(x = reorder(ORG_NAME_CURRENT, -Total_Assets),
                               
                               y = Total_Assets,
                               
-                              fill = ORG_NAME_CURRENT)) +
+                              fill = ORG_NAME_CURRENT,
+                              
+                              text = tooltip_text) 
+                              ) +
       
       geom_bar(stat = "identity", show.legend = F) +
       
@@ -912,13 +920,14 @@ server <- function(input, output, session) {
       
       theme_bw() +
       
-      theme(axis.text.x = element_blank()) # element_text(angle = 45, hjust = 1, size = 0)
+      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10)
+      )
+    
+    ggplotly(plot, tooltip = "text")
     
   })
   
 }
-
-
 
 
 # Run app
