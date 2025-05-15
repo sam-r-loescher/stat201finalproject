@@ -1,0 +1,68 @@
+library(shiny)
+library(bslib)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+ui <- navbarPage("Charitable Statistics & Organizations",
+                 
+tabPanel("Assets by State & County",
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("state", "Select State:",
+                  choices = sort(unique(charities$CENSUS_STATE_ABBR))),
+  
+      
+      selectInput("county", "Select County:",
+                  choices = NULL)
+    ),
+
+        mainPanel(
+          tags$div(
+            style = "margin-top: 150px;",
+          plotOutput(outputId = 'revenue_plot', "60vh", width = "100%")
+        )
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  # Observe changes to the state input and update counties dynamically
+  observeEvent(input$state, {
+    # Filter the dataset by the selected state
+    counties_in_state <- charities %>% 
+      filter(CENSUS_STATE_ABBR == input$state) %>% 
+      pull(CENSUS_COUNTY_NAME) %>% 
+      unique()
+    
+    # Update the county dropdown with filtered counties
+    updateSelectInput(session, "county", 
+                      choices = sort(counties_in_state),
+                      selected = NULL) # Reset county selection
+  })
+  
+  # Filter the data and create the plot based on state and county selection
+  output$revenue_plot <- renderPlot({
+    # Filter the dataset based on the selected state and county
+    filtered_data <- charities %>% 
+      filter(CENSUS_STATE_ABBR == input$state, CENSUS_COUNTY_NAME == input$county)
+    
+    # Create the plot
+    ggplot(filtered_data, aes(x = reorder(substr(ORG_NAME_CURRENT, 1, 20), -Total_Assets), 
+                                       y = Total_Assets,
+                                       fill = ORG_NAME_CURRENT)) +
+      geom_bar(stat = "identity", show.legend = F) +
+      labs(x = "Charity",
+           y = "Total Assets (in thousands of dollars)",
+           title = "Total Assets by Charity") +
+      scale_fill_discrete(name = "Charity Name") +
+      theme_bw() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10)
+            )
+  })
+}
+
+
+# Run the application 
+shinyApp(ui = ui, server = server)
